@@ -19,8 +19,8 @@ class LanguageDataset(Dataset):
         self._tokenize()
 
     def __getitem__(self, i):
-        x = F.one_hot(torch.tensor(self.eng_tokenized[i]), self.eng_voc_size)
-        y = F.one_hot(torch.tensor(self.ita_tokenized[i]), self.ita_voc_size)
+        x = torch.tensor(self.eng_tokenized[i])
+        y = torch.tensor(self.ita_tokenized[i])
         return x, y
         
     def __len__(self):
