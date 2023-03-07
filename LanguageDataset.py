@@ -2,7 +2,7 @@ import torch
 import csv
 import re
 import torch.nn.functional as F
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 
 class LanguageDataset(Dataset):
@@ -53,7 +53,6 @@ class LanguageDataset(Dataset):
         
         self.eng_voc_size = len(eng)
         self.ita_voc_size = len(ita)
-        
         self.to_eng = {idx: word for idx, word in enumerate(eng)}
         self.from_eng = {word: idx for idx, word in enumerate(eng)}
         self.to_ita = {idx: word for idx, word in enumerate(ita)}
@@ -61,3 +60,9 @@ class LanguageDataset(Dataset):
         
         self.eng_tokenized = [[self.from_eng[word] for word in sentence] for sentence in eng_tokenized]
         self.ita_tokenized = [[self.from_ita[word] for word in sentence] for sentence in ita_tokenized]
+
+
+def my_collate_fn(batch):
+    x = [item[0] for item in batch]
+    target = [item[1] for item in batch]
+    return [x, target]
