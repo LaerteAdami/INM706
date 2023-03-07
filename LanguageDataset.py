@@ -64,6 +64,7 @@ class LanguageDataset(Dataset):
 
 
 def my_collate_fn(batch):
-    x = [item[0] for item in batch]
-    target = [item[1] for item in batch]
-    return [x, target]
+    # x = [item[0] for item in batch]
+    # target = [item[1] for item in batch]
+    # return [x, target]
+    return batch
