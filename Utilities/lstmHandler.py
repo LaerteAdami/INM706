@@ -12,10 +12,10 @@ class EncoderLSTM(nn.Module):
         
 
         
-    def forward(self, x, prev_hidden):
+    def forward(self, x):#, prev_hidden):
         
         x = self.emb(x)
-        output, hidden = self.lstm(x, prev_hidden)
+        output, hidden = self.lstm(x)#, prev_hidden)
         
         return output, hidden
     
