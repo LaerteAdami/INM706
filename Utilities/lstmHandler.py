@@ -29,11 +29,14 @@ class DecoderLSTM(nn.Module):
         self.lstm = nn.LSTM(input_size = embedding_size, hidden_size = embedding_size, 
                             num_layers = num_layers, batch_first = True, bidirectional = bidirectional)
         self.relu = nn.ReLU(inplace=False)
+        self.lin = nn.Linear(embedding_size, vocabulary_size)
         
-    def forward(self, x, prev_hidden):
+    def forward(self, x):
         
+        x = self.emb(x)
         x = self.relu(x)
-        output, hidden = self.lstm(x, prev_hidden)
+        x, hidden = self.lstm(x) # x: 1 x emb_size
+        output = self.lin(x) 
         
         return output, hidden
         

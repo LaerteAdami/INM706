@@ -12,7 +12,7 @@ class LSTModel():
         self.eos_token = eos_token
         self.bos_token = bos_token
         
-    def train_model(self, dataloader, max_epochs, save_every_epochs, ckp_name, embedding_size):
+    def train_model(self, dataloader, max_epochs, save_every_epochs, ckp_name, batch_size):
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -24,62 +24,74 @@ class LSTModel():
                 
         total_training_loss = []
         
-        hidden_encoder = torch.zeros(1,1,embedding_size, device = device) # Embedding size
+        #hidden_encoder = torch.zeros(1,1,embedding_size, device = device) # Embedding size
         
         for e in range(max_epochs):
             
-            total_loss_epoch = 0
+            mean_loss_epoch = 0
             
             for id_batch, batch in enumerate(dataloader): # take each single word
                 
                 self.enc_opt.zero_grad()
                 self.dec_opt.zero_grad()
                 
-                X, y = batch
-                # Dimesions: X - 1 x seq_input_length x embed_size
-                #            y - 1 x seq_output_length x embed_size
-                X, y = X.to(device), y.to(device)
+                total_loss_batch = 0 
                 
-                input_seq_length = X.size()[1]
-                output_seq_length = y.size()[1]
-                      
-                ### ENCODER ###
-                output_encoder, hidden_encoder = self.encoder(X, hidden_encoder)              
-                output_encoder = output_encoder[:, -1, :].unsqueeze(1) # take the last hidden state
-                
-                ### DECODER ###
-                # Give token <BoS> as input in the decoder
-                input_decoder = torch.tensor([[self.bos_token]], device = device)
-                
-                output_decoder, hidden_decoder = decoder(input_decoder, output_encoder)
-                
-                prediction = output_decoder.topk(1).indices
-                target = y[0,0,:]
-                
-                loss = self.loss_fun(output_decoder, target)
-                total_loss_epoch += loss
-                
-                idt = 1
-                
-                while prediction != self.eos_token: # Forse dovresti dare il one-hot enc del eos_token
+                for X, y in zip(batch[0], batch[1]):
+                    
+                    loss_seq = 0
+                    
+                    # Dimesions: X : seq_input_length 
+                    #            y : seq_output_length
+                    X, y = X.to(device), y.to(device)
+
+                    input_seq_length = X.size()[0]
+                    output_seq_length = y.size()[0]
+
+                    ### ENCODER ###
+                    output_encoder, hidden_encoder = self.encoder(X) # output: seq_input_length x emb_size  
+                    output_encoder = output_encoder[-1, :].unsqueeze(0) # take the last hidden state: 1 x emb_size
+
+                    ### DECODER ###
+                    # Give token <BoS> as input in the decoder
+                    input_decoder = torch.tensor([self.bos_token], device = device) # dimension: 1
                           
-                    output_decoder, hidden_decoder = decoder(output_decoder, hidden_decoder) 
+                    output_decoder, hidden_decoder = self.decoder(input_decoder) # ouput: vocab_size
+                          
                     prediction = output_decoder.topk(1).indices
-                    target = y[0,idt,:]
-                    
+                    target = y[1] # e.g., 45
+
                     loss = self.loss_fun(output_decoder, target)
-                    total_loss_epoch += loss               
+                    loss_seq += loss
                     
-                    idt +=1 
+                    for idt in range(2, output_seq_length):
+                        
+                        output_decoder, hidden_decoder = self.decoder(prediction)
+                        prediction = output_decoder.topk(1).indices
+                        target = y[idt]
+                        
+                        print(output_decoder.size(), target.size())
+
+                        loss = self.loss_fun(output_decoder, target)
+                        loss_seq += loss               
+                        
+                        if prediction == self.eos_token: # EOS index
+                            break
                     
+                    total_loss_batch += (loss_seq /  output_seq_length ) 
+                    
+               # Fine batch 
+                                    
                 self.loss_fun.backward()
                 
                 self.enc_opt.step()
                 self.dec_opt.step()
                 
-                total_loss_epoch /= output_seq_length
+                mean_loss_epoch += total_loss_batch / len(dataloader)
             
-            total_training_loss.append(total_loss_epoch.item())
+            total_training_loss.append(mean_loss_epoch.item())
+            
+            print("Completed epoch: {}, loss: {}".format(e, mean_loss_epoch.item()))
                 
             ## SAVE A CHECKPOINT
             if e%save_every_epochs == 0: # save the model every "save_every_epochs" epochs
