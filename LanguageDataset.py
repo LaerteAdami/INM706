@@ -2,7 +2,7 @@ import torch
 import csv
 import re
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 
 class LanguageDataset(Dataset):
@@ -38,6 +38,7 @@ class LanguageDataset(Dataset):
         sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
         sentence = sentence.strip()
         sentence = re.split(r'[ \']+', sentence)
+
         sentence.insert(0, self.start_token)
         sentence.append(self.end_token)
         return sentence
