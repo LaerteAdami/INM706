@@ -29,7 +29,11 @@ class LanguageDataset(Dataset):
     def _load_dataset(self):
         with open(self.path, 'r', encoding='utf-8') as f:
             f = csv.reader(f, delimiter='\t')
-            data = [line for line in f]
+            data = []
+            for idd, line in enumerate(f):
+                if idd <100:
+                    data.append(line)
+            #data = [line for line in f]
         self.eng, self.ita = [l[1] for l in data], [l[3] for l in data]
         
     def _split(self, sentence):

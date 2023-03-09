@@ -31,11 +31,11 @@ class DecoderLSTM(nn.Module):
         self.relu = nn.ReLU(inplace=False)
         self.lin = nn.Linear(embedding_size, vocabulary_size)
         
-    def forward(self, x):
-        
+    def forward(self, x, hidden):
+
         x = self.emb(x)
         x = self.relu(x)
-        x, hidden = self.lstm(x) # x: 1 x emb_size
+        x, hidden = self.lstm(x, hidden) # x: 1 x emb_size
         output = self.lin(x) 
         
         return output, hidden

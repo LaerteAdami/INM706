@@ -12,7 +12,7 @@ class LSTModel():
         self.eos_token = eos_token
         self.bos_token = bos_token
         
-    def train_model(self, dataloader, max_epochs, save_every_epochs, ckp_name, batch_size):
+    def train_model(self, dataloader, max_epochs, save_every_epochs, ckp_name):
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -56,23 +56,23 @@ class LSTModel():
                     # Give token <BoS> as input in the decoder
                     input_decoder = torch.tensor([self.bos_token], device = device) # dimension: 1
                           
-                    output_decoder, hidden_decoder = self.decoder(input_decoder) # ouput: vocab_size
+                    output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: vocab_size
                           
                     prediction = output_decoder.topk(1).indices
                     target = y[1] # e.g., 45
 
-                    loss = self.loss_fun(output_decoder, target)
+                    loss = self.loss_fun(output_decoder, target.unsqueeze(0))
                     loss_seq += loss
                     
                     for idt in range(2, output_seq_length):
                         
-                        output_decoder, hidden_decoder = self.decoder(prediction)
+                        output_decoder, hidden_decoder = self.decoder(prediction.squeeze(0), hidden_decoder)
                         prediction = output_decoder.topk(1).indices
                         target = y[idt]
                         
-                        print(output_decoder.size(), target.size())
+                        #print(output_decoder.size(), target.size())
 
-                        loss = self.loss_fun(output_decoder, target)
+                        loss = self.loss_fun(output_decoder.squeeze(0), target)
                         loss_seq += loss               
                         
                         if prediction == self.eos_token: # EOS index
@@ -80,9 +80,9 @@ class LSTModel():
                     
                     total_loss_batch += (loss_seq /  output_seq_length ) 
                     
-               # Fine batch 
+               # End of batch 
                                     
-                self.loss_fun.backward()
+                total_loss_batch.backward()
                 
                 self.enc_opt.step()
                 self.dec_opt.step()
