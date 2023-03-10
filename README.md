@@ -1,12 +1,16 @@
 # INM706
 
 - [X] Language dataset
-- [ ] Encoder
-- [ ] Decoder
+- [X] Encoder
+- [X] Decoder
 - [ ] BLEU score
-- [ ] Train
+- [X] Train
+- [X] Evaluate
 - [ ] Test
 
+Other TO-DOs:
+- set same bos and eos tokens for both language
+- fix import of decoder checkpoint
 
 ### References:
 BLEU score:
