@@ -31,7 +31,7 @@ class LanguageDataset(Dataset):
             f = csv.reader(f, delimiter='\t')
             data = []
             for idd, line in enumerate(f):
-                if idd <100:
+                if idd <500:
                     data.append(line)
             #data = [line for line in f]
         self.eng, self.ita = [l[1] for l in data], [l[3] for l in data]
@@ -65,7 +65,22 @@ class LanguageDataset(Dataset):
         
         self.eng_tokenized = [[self.from_eng[word] for word in sentence] for sentence in eng_tokenized]
         self.ita_tokenized = [[self.from_ita[word] for word in sentence] for sentence in ita_tokenized]
-
+    
+    def translate(self, token, language):
+        
+        if language == 'ita':
+            lang = self.to_ita
+        elif language == 'eng':
+            lang = self.to_eng
+        else:
+            print("Select ita or eng")
+            return
+            
+        string = ""
+        for letter in token:
+            string += " "
+            string += lang[letter.item()]
+        return string
 
 def my_collate_fn(batch):
     # x = [item[0] for item in batch]

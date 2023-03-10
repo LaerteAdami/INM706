@@ -13,7 +13,7 @@ class EncoderLSTM(nn.Module):
 
         
     def forward(self, x):#, prev_hidden):
-        
+        #print(x)
         x = self.emb(x)
         output, hidden = self.lstm(x)#, prev_hidden)
         
