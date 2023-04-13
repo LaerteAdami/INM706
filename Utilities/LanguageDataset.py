@@ -9,12 +9,16 @@ class LanguageDataset(Dataset):
     
     def __init__(
                 self, data_path="Data/eng_ita.tsv",
-                start_token='<BoS>', end_token='<EoS>'
+                start_token='<BoS>', end_token='<EoS>', pad_token='<UNK>',
+                seq_len=20
                 ):
         super(LanguageDataset, self).__init__()
         self.path = data_path
         self.start_token = start_token
         self.end_token = end_token
+        self.pad_token = pad_token
+        self.seq_len = seq_len
+        
         self._load_dataset()
         self._tokenize()
 
@@ -36,6 +40,10 @@ class LanguageDataset(Dataset):
             #data = [line for line in f]
         self.eng, self.ita = [l[1] for l in data], [l[3] for l in data]
         
+    def _pad_sequence(self, sequence):
+        sequence += [self.pad_token for _ in range(self.seq_len - len(sequence) - 1)]
+        return sequence
+    
     def _split(self, sentence):
         sentence.lower()
         sentence = re.sub(r'[,.:;\-""!%&?\/]', r' ', sentence)
@@ -44,6 +52,7 @@ class LanguageDataset(Dataset):
         sentence = re.split(r'[ \']+', sentence)
 
         sentence.insert(0, self.start_token)
+        sentence = self._pad_sequence(sentence)
         sentence.append(self.end_token)
         return sentence
     
@@ -52,9 +61,9 @@ class LanguageDataset(Dataset):
         ita_tokenized = [self._split(sentence) for sentence in self.ita]
         
         eng = set(word for sentence in eng_tokenized for word in sentence)
-        eng.add((self.start_token, self.end_token))
+        eng.add((self.start_token, self.end_token, self.pad_token))
         ita = set(word for sentence in ita_tokenized for word in sentence)
-        eng.add((self.start_token, self.end_token))
+        eng.add((self.start_token, self.end_token, self.pad_token))
         
         self.eng_voc_size = len(eng)
         self.ita_voc_size = len(ita)
@@ -65,6 +74,7 @@ class LanguageDataset(Dataset):
         
         self.eng_tokenized = [[self.from_eng[word] for word in sentence] for sentence in eng_tokenized]
         self.ita_tokenized = [[self.from_ita[word] for word in sentence] for sentence in ita_tokenized]
+
     
     def translate(self, token, language):
         
@@ -81,9 +91,3 @@ class LanguageDataset(Dataset):
             string += " "
             string += lang[letter.item()]
         return string
-
-def my_collate_fn(batch):
-    # x = [item[0] for item in batch]
-    # target = [item[1] for item in batch]
-    # return [x, target]
-    return batch
