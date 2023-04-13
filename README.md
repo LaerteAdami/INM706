@@ -4,6 +4,8 @@
 - [X] Encoder
 - [X] Decoder
 - [ ] BLEU score
+- [ ] batches
+- [ ] Attention
 - [X] Train
 - [X] Evaluate
 - [ ] Test
