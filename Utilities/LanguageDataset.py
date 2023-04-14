@@ -41,7 +41,10 @@ class LanguageDataset(Dataset):
         self.eng, self.ita = [l[1] for l in data], [l[3] for l in data]
         
     def _pad_sequence(self, sequence):
-        sequence += [self.pad_token for _ in range(self.seq_len - len(sequence) - 1)]
+        if len(sequence) >= self.seq_len - 1:
+            sequence = sequence[ : self.seq_len - 1]
+        else:
+            sequence += [self.pad_token for _ in range(self.seq_len - len(sequence) - 1)]
         return sequence
     
     def _split(self, sentence):
@@ -91,3 +94,9 @@ class LanguageDataset(Dataset):
             string += " "
             string += lang[letter.item()]
         return string
+    
+def my_collate_fn(batch):
+    # x = [item[0] for item in batch]
+    # target = [item[1] for item in batch]
+    # return [x, target]
+    return batch
