@@ -24,76 +24,71 @@ class LSTModel():
                 
         total_training_loss = []
         
-        #hidden_encoder = torch.zeros(1,1,embedding_size, device = device) # Embedding size
-        #ht_0 = torch.zeros(1,embedding_size, device = device)
-        #ct_0 = torch.zeros(1,embedding_size, device = device)
-        #hidden_encoder = (ht_0, ct_0)
-        
         for e in range(1,max_epochs+1):
             
             mean_loss_epoch = 0
             
-            for id_batch, batch in enumerate(dataloader): # take each single word
-                
+            for id_batch, batch in enumerate(dataloader): 
+
                 self.enc_opt.zero_grad()
                 self.dec_opt.zero_grad()
                 
-                total_loss_batch = 0 
-
-                for line in batch:
-                    X = line[0]
-                    y = line[1]
+                loss_batch = 0 
+                
+                # Dimesions: X : batch_size x input_seq_length 
+                #            y : batch_size x output_seq_length
+                X, y = batch 
+                X, y = X.to(device), y.to(device)
+                #print("Input enc : {}".format( X.size()))
+                
+                # Sequence length 
+                input_seq_length = X.size()[1]
+                output_seq_length = y.size()[1]
+                batch_size = X.size()[0]
+                
+                ### ENCODER ###
+                output_encoder, hidden_encoder = self.encoder(X) # output: batch_size x input_seq_length x emb_size
+                last_hidden_encoder = output_encoder[:, -1, :].unsqueeze(0) # take the last hidden state: 1 x batch_size x emb_size
+                c_final = hidden_encoder[1] # Encoder final state 
+                
+                #print("Last hidden state : {}".format(last_hidden_encoder.size()))
+                
+                ### DECODER ###
+                # Give token <BoS> as input in the decoder
+                input_decoder = torch.tensor([[self.bos_token for _ in range(batch_size)]], device = device) # dimension: 1 x batch_size
+                input_decoder =  torch.transpose(input_decoder, 0, 1) # dimension: batch_size x 1
+                
+                #print("Input dec : {}".format( input_decoder.size()))
+                
+                output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: batch_size x vocabulary
+                #print("Out dec : {}".format( output_decoder.size()))
+                
+                prediction = output_decoder.topk(1).indices
+                #print("prediction : {}".format( prediction.size()))
+                
+                target = y[:, 1]
+                
+                loss = self.loss_fun(output_decoder.squeeze(1), target)
+                loss_batch += loss
                     
-                    loss_seq = 0
-                    
-                    # Dimesions: X : seq_input_length 
-                    #            y : seq_output_length
-                    X, y = X.to(device), y.to(device)
+                for idt in range(2, output_seq_length):
 
-                    input_seq_length = X.size()[0]
-                    output_seq_length = y.size()[0]
-                    #print(X, y)
-                    
-                    ### ENCODER ###
-                    output_encoder, hidden_encoder = self.encoder(X) # output: seq_input_length x emb_size  
-                    #output_encoder = output_encoder[-1, :].unsqueeze(0) # take the last hidden state: 1 x emb_size
-
-                    ### DECODER ###
-                    # Give token <BoS> as input in the decoder
-                    input_decoder = torch.tensor([self.bos_token], device = device) # dimension: 1
-                          
-                    output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: vocab_size
-                          
+                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), hidden_decoder)
                     prediction = output_decoder.topk(1).indices
-                    target = y[1] # e.g., 45
+                    target = y[:, idt]
 
-                    loss = self.loss_fun(output_decoder, target.unsqueeze(0))
-                    loss_seq += loss
-                    
-                    for idt in range(2, output_seq_length):
-                        
-                        output_decoder, hidden_decoder = self.decoder(prediction.squeeze(0), hidden_decoder)
-                        prediction = output_decoder.topk(1).indices
-                        target = y[idt]
-                        
-                        #print(output_decoder.size(), target.size())
+                    loss_batch += self.loss_fun(output_decoder.squeeze(1), target)
 
-                        loss = self.loss_fun(output_decoder.squeeze(0), target)
-                        loss_seq += loss               
-                        
-                        if prediction == self.eos_token: # EOS index
-                            break
-                    
-                    total_loss_batch += (loss_seq /  output_seq_length ) 
+                loss_batch /= output_seq_length
                     
                # End of batch 
                                     
-                total_loss_batch.backward()
+                loss_batch.backward()
                 
                 self.enc_opt.step()
                 self.dec_opt.step()
                 
-                mean_loss_epoch += total_loss_batch / len(dataloader)
+                mean_loss_epoch += loss_batch / len(dataloader)
             
             total_training_loss.append(mean_loss_epoch.item())
             
@@ -111,7 +106,7 @@ class LSTModel():
 
     def evaluate_model(self, dataloader, max_length, enc_ckp = None, dec_ckp = None):
         
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")# if torch.cuda.is_available() else "cpu")
         
         if enc_ckp is not None:
             self.encoder.load_state_dict(torch.load(enc_ckp))
@@ -127,43 +122,47 @@ class LSTModel():
         result = []
                             
         for id_batch, batch in enumerate(dataloader): # take each batch
-
+          
+   
             for line in batch: # Take each sentence
                 
-                X = line[0]
-                y = line[1]
+                X, y = batch 
+                X, y = X.to(device), y.to(device)
+                batch_size = X.size()[0]
+                seq_length = X.size()[1]
                 trans = []
                 
-                X, y = X.to(device), y.to(device)
-
                 ### ENCODER ###
-                output_encoder, hidden_encoder = self.encoder(X) # output: seq_input_length x emb_size  
-
+                output_encoder, hidden_encoder = self.encoder(X) # output: batch_size x input_seq_length x emb_size
+                
                 ### DECODER ###
                 # Give token <BoS> as input in the decoder
-                input_decoder = torch.tensor([self.bos_token], device = device) # dimension: 1
-                trans.append(self.bos_token)
+                input_decoder = torch.tensor([[self.bos_token for _ in range(batch_size)]], device = device) # dimension: 1 x batch_size
+                input_decoder =  torch.transpose(input_decoder, 0, 1) # dimension: batch_size x 1
+                trans.append(input_decoder)
 
                 output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: vocab_size
 
-                output_decoder = output_decoder.softmax(dim=1)
+                output_decoder = output_decoder.softmax(dim=-1)
+                
                 prediction = output_decoder.topk(1).indices
                 
-                trans.append(prediction)
+                trans.append(prediction.squeeze(-1))
 
-                for idt in range(max_length):
+                for _ in range( seq_length - 2):
 
-                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(0), hidden_decoder)
-                    output_decoder = output_decoder.softmax(dim=1)
+                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), hidden_decoder)
+                    output_decoder = output_decoder.softmax(dim=-1)
                     prediction = output_decoder.topk(1).indices
-                    trans.append(prediction.item())          
-
-                    if prediction == self.eos_token: # EOS index
-                        break
+                    trans.append(prediction.squeeze(-1))
+                    
+                trans = torch.cat(trans, dim=-1)
+                return X, y, trans
+                
+                trans = torch.cat(trans, dim=-1)
 
                 # For each row, return the original sentences and the translation
-                result.append((X,y,torch.tensor(trans)))
-            break
+                result.append((X,y,trans))
 
         return result
 
