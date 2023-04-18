@@ -10,14 +10,12 @@ class EncoderLSTM(nn.Module):
         self.lstm = nn.LSTM(input_size = embedding_size, hidden_size = embedding_size, 
                             num_layers = num_layers, batch_first = True, bidirectional = bidirectional)
         
+    def forward(self, x):
 
-        
-    def forward(self, x):#, prev_hidden):
-        #print(x)
         x = self.emb(x)
-        output, hidden = self.lstm(x)#, prev_hidden)
-        
+        output, hidden = self.lstm(x)
         return output, hidden
+    
     
 class DecoderLSTM(nn.Module):
     
@@ -35,7 +33,11 @@ class DecoderLSTM(nn.Module):
 
         x = self.emb(x)
         x = self.relu(x)
-        x, hidden = self.lstm(x, hidden) # x: 1 x emb_size
+        #print("x: {}".format(x.size()))
+        #print("h: {}".format(hidden[0].size()))
+        #print("c: {}".format(hidden[1].size()))
+              
+        x, hidden = self.lstm(x, hidden) 
         output = self.lin(x) 
         
         return output, hidden
