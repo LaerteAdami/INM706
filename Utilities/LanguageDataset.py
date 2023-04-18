@@ -35,16 +35,16 @@ class LanguageDataset(Dataset):
             f = csv.reader(f, delimiter='\t')
             data = []
             for idd, line in enumerate(f):
-                if idd <500:
+                if idd <5000:
                     data.append(line)
-            #data = [line for line in f]
+            # data = [line for line in f]
         self.eng, self.ita = [l[1] for l in data], [l[3] for l in data]
         
     def _pad_sequence(self, sequence):
-        if len(sequence) >= self.seq_len - 1:
-            sequence = sequence[ : self.seq_len - 1]
+        if len(sequence) >= self.seq_len:
+            sequence = sequence[ : self.seq_len]
         else:
-            sequence += [self.pad_token for _ in range(self.seq_len - len(sequence) - 1)]
+            sequence += [self.pad_token for _ in range(self.seq_len - len(sequence))]
         return sequence
     
     def _split(self, sentence):
@@ -55,8 +55,8 @@ class LanguageDataset(Dataset):
         sentence = re.split(r'[ \']+', sentence)
 
         sentence.insert(0, self.start_token)
-        sentence = self._pad_sequence(sentence)
         sentence.append(self.end_token)
+        sentence = self._pad_sequence(sentence)
         return sentence
     
     def _tokenize(self):
@@ -94,9 +94,3 @@ class LanguageDataset(Dataset):
             string += " "
             string += lang[letter.item()]
         return string
-    
-def my_collate_fn(batch):
-    # x = [item[0] for item in batch]
-    # target = [item[1] for item in batch]
-    # return [x, target]
-    return batch
