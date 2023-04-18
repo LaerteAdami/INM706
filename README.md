@@ -1,18 +1,12 @@
 # INM706
 
-- [X] Language dataset
-- [X] Encoder
-- [X] Decoder
-- [ ] BLEU score
-- [ ] batches
-- [ ] Attention
-- [X] Train
-- [X] Evaluate
-- [ ] Test
-
-Other TO-DOs:
-- set same bos and eos tokens for both language
-- fix import of decoder checkpoint
+### TODO
+- [ ] train test split
+- [ ] BLEU score / evaluation
+- [ ] fixing decoder for n_layers > 1 and bidirectional LSTM
+- [ ] experimenting with architectures
+- [ ] set same bos and eos tokens for both language
+- [ ] fix import of decoder checkpoint
 
 ### References:
 BLEU score:
