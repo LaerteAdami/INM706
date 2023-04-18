@@ -48,8 +48,6 @@ class LSTModel():
                 
                 ### ENCODER ###
                 output_encoder, hidden_encoder = self.encoder(X) # output: batch_size x input_seq_length x emb_size
-                last_hidden_encoder = output_encoder[:, -1, :].unsqueeze(0) # take the last hidden state: 1 x batch_size x emb_size
-                c_final = hidden_encoder[1] # Encoder final state 
                 
                 #print("Last hidden state : {}".format(last_hidden_encoder.size()))
                 
@@ -60,7 +58,7 @@ class LSTModel():
                 
                 #print("Input dec : {}".format( input_decoder.size()))
                 
-                output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: batch_size x vocabulary
+                output_decoder, hidden_decoder = self.decoder(input_decoder, output_encoder, hidden_encoder) # ouput: batch_size x vocabulary
                 #print("Out dec : {}".format( output_decoder.size()))
                 
                 prediction = output_decoder.topk(1).indices
@@ -73,7 +71,7 @@ class LSTModel():
                     
                 for idt in range(2, output_seq_length):
 
-                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), hidden_decoder)
+                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), output_encoder, hidden_decoder)
                     prediction = output_decoder.topk(1).indices
                     target = y[:, idt]
 
@@ -92,7 +90,7 @@ class LSTModel():
             
             total_training_loss.append(mean_loss_epoch.item())
             
-            print("Completed epoch: {}, loss: {}".format(e, round(mean_loss_epoch.item(),3)))
+            print(f"\033[34mEPOCH {e}:\033[0m train loss =  {round(mean_loss_epoch.item(),3)}")
                 
             ## SAVE A CHECKPOINT
             if e%save_every_epochs == 0: # save the model every "save_every_epochs" epochs
@@ -141,7 +139,7 @@ class LSTModel():
                 input_decoder =  torch.transpose(input_decoder, 0, 1) # dimension: batch_size x 1
                 trans.append(input_decoder)
 
-                output_decoder, hidden_decoder = self.decoder(input_decoder, hidden_encoder) # ouput: vocab_size
+                output_decoder, hidden_decoder = self.decoder(input_decoder, output_encoder, hidden_encoder) # ouput: vocab_size
 
                 output_decoder = output_decoder.softmax(dim=-1)
                 
@@ -151,7 +149,7 @@ class LSTModel():
 
                 for _ in range( seq_length - 2):
 
-                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), hidden_decoder)
+                    output_decoder, hidden_decoder = self.decoder(prediction.squeeze(1), output_encoder, hidden_decoder)
                     output_decoder = output_decoder.softmax(dim=-1)
                     prediction = output_decoder.topk(1).indices
                     trans.append(prediction.squeeze(-1))
