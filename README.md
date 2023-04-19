@@ -1,7 +1,7 @@
 # INM706
 
 ### TODO
-- [ ] train test split
+- [x] train test split
 - [ ] BLEU score / evaluation
 - [ ] fixing decoder for n_layers > 1 and bidirectional LSTM
 - [ ] experimenting with architectures
