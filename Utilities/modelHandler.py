@@ -12,21 +12,24 @@ class LSTModel():
         self.eos_token = eos_token
         self.bos_token = bos_token
         
-    def train_model(self, dataloader, max_epochs, save_every_epochs, ckp_name):
+    def train_model(self, dataloader, valloader, max_epochs, save_every_epochs, ckp_name):
         
-        device = torch.device("cpu")# if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Initialise models
         self.encoder.to(device)
         self.decoder.to(device)
-        self.encoder.train()
-        self.decoder.train()
-                
+         
         total_training_loss = []
+        total_validation_loss = []
         
         for e in range(1,max_epochs+1):
             
             mean_loss_epoch = 0
+            mean_loss_epoch_val = 0
+            
+            self.encoder.train()
+            self.decoder.train()
             
             for id_batch, batch in enumerate(dataloader): 
 
@@ -90,7 +93,24 @@ class LSTModel():
             
             total_training_loss.append(mean_loss_epoch.item())
             
-            print(f"\033[34mEPOCH {e}:\033[0m train loss =  {round(mean_loss_epoch.item(),3)}")
+            # Model validation
+            
+            #self.encoder.eval()
+            #self.decoder.eval()
+            #for id_batch, batch in enumerate(valloader):
+                              
+             #   loss_batch = 0 
+
+              #  X, y = batch 
+               # X, y = X.to(device), y.to(device)
+            
+            
+            
+            total_validation_loss.append(mean_loss_epoch_val.item())
+            
+            
+            
+            print(f"\033[34mEPOCH {e}:\033[0m train loss = {round(mean_loss_epoch.item(),3)}")
                 
             ## SAVE A CHECKPOINT
             if e%save_every_epochs == 0: # save the model every "save_every_epochs" epochs
@@ -99,12 +119,12 @@ class LSTModel():
                 torch.save(self.encoder.state_dict(), ckp_path_enc)
                 torch.save(self.decoder.state_dict(), ckp_path_dec)  
                                
-        return total_training_loss
+        return total_training_loss, total_validation_loss
     
 
     def evaluate_model(self, dataloader, max_length, enc_ckp = None, dec_ckp = None):
         
-        device = torch.device("cpu")# if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         if enc_ckp is not None:
             self.encoder.load_state_dict(torch.load(enc_ckp))
