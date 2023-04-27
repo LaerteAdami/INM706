@@ -33,8 +33,10 @@ class LanguageDataset(Dataset):
             f = csv.reader(f, delimiter='\t')
             data = []
             for idd, line in enumerate(f):
-                if idd <5000:
+                if idd <40000:
                     data.append(line)
+                else:
+                    break
                      
         self.corpus_dict = {}
         eng = []
@@ -48,7 +50,7 @@ class LanguageDataset(Dataset):
                 self.corpus_dict[l[1]] = [l[3]]
             else:
                 self.corpus_dict[l[1]].append(l[3])
-        
+
         # Create vocabularies with all words for both language
         self._create_vocabulary(eng, ita)
         
@@ -61,6 +63,10 @@ class LanguageDataset(Dataset):
         keys_test = keys[0 : int(len(keys)*self.test_split)]
         keys_val = keys[len(keys_test) : len(keys_test)+int(len(keys)*self.val_split)]
         keys_train = keys[len(keys_test) + len(keys_val) : len(keys)]
+        
+        # Dictionaries for BLUE scores
+        #self.blue_score_test = {key: self.corpus_dict[key] for key in keys_test}
+        #self.blue_score_val = {key: self.corpus_dict[key] for key in keys_val}       
         
         # Divide data according to split in keys
         eng_train, ita_train = self._dataset_split(keys_train)
@@ -115,9 +121,10 @@ class LanguageDataset(Dataset):
         
         eng = []
         ita = []
+        corpus_dict_temp = self.corpus_dict.copy()
 
         for key in keys:
-            pair = self.corpus_dict[key]
+            pair = corpus_dict_temp[key].copy()
             while len(pair) != 0:
                 eng.append(key)
                 ita.append(pair.pop())
@@ -162,15 +169,11 @@ class SplitDataset(Dataset):
     def __init__(
             self, 
             eng_sentences = None,
-            ita_sentences = None#,
-            #eng_voc_size = None,
-            #ita_voc_size = None,
+            ita_sentences = None
             ):
         super(SplitDataset, self).__init__()
         self.eng_sentences = eng_sentences
         self.ita_sentences = ita_sentences
-        #self.eng_voc_size = eng_voc_size
-        #self.ita_voc_size = ita_voc_size
         
     def __getitem__(self, i):
         x = torch.tensor(self.eng_sentences[i])
