@@ -88,9 +88,13 @@ class LanguageDataset(Dataset):
         return train_set, val_set, test_set
         
     def _pad_sequence(self, sequence):
-        if len(sequence) >= self.seq_len:
-            sequence = sequence[ : self.seq_len]
+        if len(sequence) >= self.seq_len - 2:
+            sequence = sequence[ : self.seq_len - 2]
+            sequence.insert(0, self.start_token)
+            sequence.append(self.end_token)
         else:
+            sequence.insert(0, self.start_token)
+            sequence.append(self.end_token)
             sequence += [self.pad_token for _ in range(self.seq_len - len(sequence))]
         return sequence
     
@@ -100,10 +104,8 @@ class LanguageDataset(Dataset):
         sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
         sentence = sentence.strip()
         sentence = re.split(r'[ \']+', sentence)
-
-        sentence.insert(0, self.start_token)
-        sentence.append(self.end_token)
         sentence = self._pad_sequence(sentence)
+        
         return sentence
     
     def _create_tokenized_set(self, eng, ita):
