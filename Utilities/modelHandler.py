@@ -169,7 +169,7 @@ class LSTModel():
         if enc_ckp is not None:
             self.encoder.load_state_dict(torch.load(enc_ckp))
         if dec_ckp is not None:
-            self.encoder.load_state_dict(torch.load(dec_ckp))
+            self.decoder.load_state_dict(torch.load(dec_ckp))
             
         # Initialise models
         self.encoder.to(device)
