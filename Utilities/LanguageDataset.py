@@ -72,8 +72,7 @@ class LanguageDataset(Dataset):
         keys_train = keys[len(keys_test) + len(keys_val) : len(keys)]
         
         # Dictionaries for BLUE scores
-        #self.blue_score_test = {key: self.corpus_dict[key] for key in keys_test}
-        #self.blue_score_val = {key: self.corpus_dict[key] for key in keys_val}       
+        self.blue_score_test = {' '.join(self._split_key(key)): [self._split_key(c) for c in self.corpus_dict[key]] for key in keys_test}
         
         # Divide data according to split in keys
         eng_train, ita_train = self._dataset_split(keys_train)
@@ -88,11 +87,23 @@ class LanguageDataset(Dataset):
         return train_set, val_set, test_set
         
     def _pad_sequence(self, sequence):
-        if len(sequence) >= self.seq_len:
+        if len(sequence) >= self.seq_len - 1:
             sequence = sequence[ : self.seq_len]
         else:
-            sequence += [self.pad_token for _ in range(self.seq_len - len(sequence))]
+            sequence += [self.pad_token for _ in range(self.seq_len - len(sequence) - 1)]
         return sequence
+    
+    def _split_key(self, sentence):
+        sentence.lower()
+        sentence = re.sub(r'[,.:;\-""!%&?\/]', r' ', sentence)
+        sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
+        sentence = sentence.strip()
+        sentence = re.split(r'[ \']+', sentence)
+        
+        if len(sentence) >= self.seq_len:
+            sentence = sentence[ : self.seq_len]
+
+        return sentence
     
     def _split(self, sentence):
         sentence.lower()
@@ -102,24 +113,20 @@ class LanguageDataset(Dataset):
         sentence = re.split(r'[ \']+', sentence)
 
         sentence.insert(0, self.start_token)
-        sentence.append(self.end_token)
         sentence = self._pad_sequence(sentence)
+        sentence.append(self.end_token)
+        
         return sentence
     
     def _create_tokenized_set(self, eng, ita):
         eng_tokenized = [self._split(sentence) for sentence in eng]
         ita_tokenized = [self._split(sentence) for sentence in ita]
-                
-        #eng_voc_size = len(eng_tokenized)
-        #ita_voc_size = len(ita_tokenized)
         
         eng_tokenized = [[self.from_eng[word] for word in sentence] for sentence in eng_tokenized]
         ita_tokenized = [[self.from_ita[word] for word in sentence] for sentence in ita_tokenized]
              
         data_set = SplitDataset(eng_sentences = eng_tokenized,
-                                ita_sentences = ita_tokenized#,
-                                #eng_voc_size = eng_voc_size,
-                                #ita_voc_size = ita_voc_size,
+                                ita_sentences = ita_tokenized
                                )
         
         return data_set
@@ -154,8 +161,8 @@ class LanguageDataset(Dataset):
         self.from_eng = {word: idx for idx, word in enumerate(eng)}
         self.to_ita = {idx: word for idx, word in enumerate(ita)}
         self.from_ita = {word: idx for idx, word in enumerate(ita)}
-        
-    def translate(self, token, language):
+          
+    def translate(self, X, language):
         
         if language == 'ita':
             lang = self.to_ita
@@ -164,12 +171,24 @@ class LanguageDataset(Dataset):
         else:
             print("Select ita or eng")
             return
+        
+        X_out = []
+        
+        for line in X:
             
-        string = ""
-        for letter in token:
-            string += " "
-            string += lang[letter.item()]
-        return string
+            text = []
+            for letter in line:
+
+                if lang[letter.item()] == self.start_token or lang[letter.item()] == self.pad_token:
+                    pass
+                elif lang[letter.item()] == self.end_token:
+                    break
+                else:
+                    text.append(lang[letter.item()])
+            
+            X_out.append(text)
+
+        return X_out
                
 class SplitDataset(Dataset):
 
