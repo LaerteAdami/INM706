@@ -16,7 +16,8 @@ class LanguageDataset(Dataset):
                 seq_len=20,
                 test_split = 0.2,
                 val_split = 0.1,
-                shuffle_data = True
+                shuffle_data = True,
+                limit_data = None
                 ):
         super(LanguageDataset, self).__init__()
         self.path = data_path
@@ -27,13 +28,19 @@ class LanguageDataset(Dataset):
         self.test_split = test_split 
         self.val_split = val_split 
         self.shuffle_data = shuffle_data
+        self.limit_data = limit_data
            
     def get_datasets(self):
         with open(self.path, 'r', encoding='utf-8') as f:
             f = csv.reader(f, delimiter='\t')
             data = []
+            
+            # To limit the lines considered when loading the dataset
+            if self.limit_data is None:
+                self.limit_data = 1e9
+            
             for idd, line in enumerate(f):
-                if idd <40000:
+                if idd < self.limit_data:
                     data.append(line)
                 else:
                     break
