@@ -72,8 +72,7 @@ class LanguageDataset(Dataset):
         keys_train = keys[len(keys_test) + len(keys_val) : len(keys)]
         
         # Dictionaries for BLUE scores
-        #self.blue_score_test = {key: self.corpus_dict[key] for key in keys_test}
-        #self.blue_score_val = {key: self.corpus_dict[key] for key in keys_val}       
+        self.blue_score_test = {' '.join(self._split_key(key)): [self._split_key(c) for c in self.corpus_dict[key]] for key in keys_test}      
         
         # Divide data according to split in keys
         eng_train, ita_train = self._dataset_split(keys_train)
@@ -97,6 +96,18 @@ class LanguageDataset(Dataset):
             sequence.append(self.end_token)
             sequence += [self.pad_token for _ in range(self.seq_len - len(sequence))]
         return sequence
+    
+    def _split_key(self, sentence):
+        sentence.lower()
+        sentence = re.sub(r'[,.:;\-""!%&?\/]', r' ', sentence)
+        sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
+        sentence = sentence.strip()
+        sentence = re.split(r'[ \']+', sentence)
+        
+        if len(sentence) >= self.seq_len:
+            sentence = sentence[ : self.seq_len]
+
+        return sentence
     
     def _split(self, sentence):
         sentence.lower()
