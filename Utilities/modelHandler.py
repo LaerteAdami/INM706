@@ -162,7 +162,7 @@ class LSTModel():
         return total_training_loss, total_validation_loss
     
 
-    def evaluate_model(self, dataloader, max_length, enc_ckp = None, dec_ckp = None):
+    def evaluate_model(self, dataloader, enc_ckp = None, dec_ckp = None):
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
