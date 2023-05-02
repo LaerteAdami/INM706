@@ -47,7 +47,7 @@ class DecoderLSTM(nn.Module):
 
 class AttentionDecoderLSTM(nn.Module):
     
-    def __init__(self, vocabulary_size, embedding_size, seq_len, num_layers = 1, bidirectional = False):
+    def __init__(self, vocabulary_size, embedding_size, seq_len, num_layers = 1, bidirectional = False, dropout_factor=0.1):
 
         super(AttentionDecoderLSTM, self).__init__()
         
@@ -57,6 +57,7 @@ class AttentionDecoderLSTM(nn.Module):
         self.n_layers = num_layers
         
         self.emb = nn.Embedding(vocabulary_size, embedding_size)
+        self.dropout = nn.Dropout(dropout_factor)
         self.alignment = nn.Linear(embedding_size * (self.D * self.n_layers + 1), seq_len)
         self.softmax = nn.Softmax(dim=1)
         self.lstm = nn.LSTM(input_size = embedding_size * (self.D + 1), hidden_size = embedding_size, 
@@ -70,6 +71,7 @@ class AttentionDecoderLSTM(nn.Module):
         # x: (batch, 1, emb), y: (batch, seq, D * emb), h: (D, batch, emb), c: (1, batch, emb)
         
         x = self.emb(x)
+        x = self.dropout(x)
         # print(f'x: {x.size()}, y: {y.size()}, h: {h.size()}, c: {c.size()}')
         
         # alignment: (emb * 2) -> (seq)

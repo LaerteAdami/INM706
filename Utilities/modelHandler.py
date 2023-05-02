@@ -15,6 +15,7 @@ class LSTModel():
     def train_model(self, dataloader, valloader, max_epochs, save_every_epochs, ckp_name):
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f'Working on {device}')
         
         # Initialise models
         self.encoder.to(device)
@@ -178,9 +179,9 @@ class LSTModel():
         self.decoder.eval()
         
         # Initialise outputs
-        X_out = torch.tensor([], dtype = torch.int)
-        y_out = torch.tensor([], dtype = torch.int)
-        trans_out = torch.tensor([], dtype = torch.int)
+        X_out = torch.tensor([], dtype = torch.int64)
+        y_out = torch.tensor([], dtype = torch.int64)
+        trans_out = torch.tensor([], dtype = torch.int64)
         X_out, y_out, trans_out = X_out.to(device), y_out.to(device), trans_out.to(device)
                             
         for id_batch, batch in enumerate(dataloader): # take each batch
