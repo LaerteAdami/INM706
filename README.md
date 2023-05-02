@@ -4,8 +4,8 @@
 - [x] train test split
 - [x] Evaluation 
 - [x] fix import of decoder checkpoint
-- [ ] BLEU score
-- [ ] fixing decoder for n_layers > 1 and bidirectional LSTM
+- [x] BLEU score
+- [x] fixing decoder for n_layers > 1 and bidirectional LSTM
 - [ ] experimenting with architectures
 - [ ] set same bos and eos tokens for both language
 
