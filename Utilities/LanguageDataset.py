@@ -104,8 +104,8 @@ class LanguageDataset(Dataset):
         sentence = sentence.strip()
         sentence = re.split(r'[ \']+', sentence)
         
-        if len(sentence) >= self.seq_len:
-            sentence = sentence[ : self.seq_len]
+        if len(sentence) >= (self.seq_len - 2) :
+            sentence = sentence[ : self.seq_len - 2]
 
         return sentence
     
@@ -168,7 +168,7 @@ class LanguageDataset(Dataset):
         self.to_ita = {idx: word for idx, word in enumerate(ita)}
         self.from_ita = {word: idx for idx, word in enumerate(ita)}
         
-    def translate(self, token, language):
+    def translate(self, X, language):
         
         if language == 'ita':
             lang = self.to_ita
@@ -177,12 +177,24 @@ class LanguageDataset(Dataset):
         else:
             print("Select ita or eng")
             return
+        
+        X_out = []
+        
+        for line in X:
             
-        string = ""
-        for letter in token:
-            string += " "
-            string += lang[letter.item()]
-        return string
+            text = []
+            for letter in line:
+
+                if lang[letter.item()] == self.start_token or lang[letter.item()] == self.pad_token:
+                    pass
+                elif lang[letter.item()] == self.end_token:
+                    break
+                else:
+                    text.append(lang[letter.item()])
+            
+            X_out.append(text)
+
+        return X_out
                
 class SplitDataset(Dataset):
 
