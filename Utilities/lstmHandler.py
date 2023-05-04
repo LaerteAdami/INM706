@@ -58,7 +58,7 @@ class AttentionDecoderLSTM(nn.Module):
         
         self.emb = nn.Embedding(vocabulary_size, embedding_size)
         self.dropout = nn.Dropout(dropout_factor)
-        self.alignment = nn.Linear(embedding_size * (self.D * self.n_layers + 1), seq_len)
+        self.alignment = nn.Linear(self.D * self.emb_size * (self.seq_len + self.n_layers), seq_len)
         self.softmax = nn.Softmax(dim=1)
         self.lstm = nn.LSTM(input_size = embedding_size * (self.D + 1), hidden_size = embedding_size, 
                             num_layers = num_layers, batch_first = True, bidirectional = bidirectional)
@@ -77,7 +77,7 @@ class AttentionDecoderLSTM(nn.Module):
         # alignment: (emb * 2) -> (seq)
         attention_weights = self.softmax(
             self.alignment(
-                torch.cat((x, h.view(-1, 1, self.n_layers * self.D * self.emb_size)), dim=-1)
+                torch.cat((y.reshape(-1, 1, self.seq_len * self.D * self.emb_size), h.view(-1, 1, self.n_layers * self.D * self.emb_size)), dim=-1)
             )
         )
         # context_vector: lc(attention_weight, y) size: (1, batch, emb)
