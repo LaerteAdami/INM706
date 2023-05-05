@@ -1,14 +1,8 @@
 # INM706
+Neural machine translation from English to Italian, using an encoder-decoder RNN architecture with Bahdanau attention. 
 
-### TODO
-- [x] train test split
-- [x] Evaluation 
-- [x] fix import of decoder checkpoint
-- [x] BLEU score
-- [x] fixing decoder for n_layers > 1 and bidirectional LSTM
-- [ ] experimenting with architectures
-- [ ] set same bos and eos tokens for both language
-
+Dataset:
+https://www.manythings.org/anki/
 
 ### References:
 BLEU score:
