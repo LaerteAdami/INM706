@@ -1,3 +1,6 @@
+# Source: - https://pytorch.org/text/stable/data_metrics.html
+#         - https://pytorch.org/text/_modules/torchtext/data/metrics.html
+
 import collections
 import math
 

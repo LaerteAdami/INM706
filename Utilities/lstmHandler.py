@@ -3,6 +3,7 @@ import torch.nn as nn
 
 class EncoderLSTM(nn.Module):
     
+    # Encoder definition
     def __init__(self, vocabulary_size, embedding_size, num_layers = 1, bidirectional = False):
         
         super(EncoderLSTM, self).__init__()
@@ -17,9 +18,9 @@ class EncoderLSTM(nn.Module):
         output, hidden = self.lstm(x)
         return output, hidden
     
-    
 class DecoderLSTM(nn.Module):
     
+    # Decoder definition (no attention)
     def __init__(self, vocabulary_size, embedding_size, num_layers = 1, bidirectional = False):
 
         super(DecoderLSTM, self).__init__()
@@ -43,10 +44,9 @@ class DecoderLSTM(nn.Module):
         
         return output, hidden
         
-        
-
 class AttentionDecoderLSTM(nn.Module):
     
+    # Decoder definition (with attention)
     def __init__(self, vocabulary_size, embedding_size, seq_len, num_layers = 1, bidirectional = False, dropout_factor=0.1):
 
         super(AttentionDecoderLSTM, self).__init__()

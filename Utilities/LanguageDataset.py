@@ -5,7 +5,8 @@ import random
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
-
+# Class to handle the language dataset, perfoming all the preprocessing operations
+# and crating the train, validation and test datasets
 class LanguageDataset(Dataset):
     
     def __init__(
@@ -98,6 +99,8 @@ class LanguageDataset(Dataset):
         return sequence
     
     def _split_key(self, sentence):
+        
+        # Split the sentences used for the BLEU score metric
         sentence.lower()
         sentence = re.sub(r'[,.:;\-""!%&?\/]', r' ', sentence)
         sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
@@ -110,6 +113,8 @@ class LanguageDataset(Dataset):
         return sentence
     
     def _split(self, sentence):
+        
+        # Split the sentences used for training, validation and testing
         sentence.lower()
         sentence = re.sub(r'[,.:;\-""!%&?\/]', r' ', sentence)
         sentence = re.sub(r'([0-9]+) *([€$£])', r'\2\1', sentence)
@@ -120,25 +125,23 @@ class LanguageDataset(Dataset):
         return sentence
     
     def _create_tokenized_set(self, eng, ita):
+        
+        # Tokenike English and Italian sentences
         eng_tokenized = [self._split(sentence) for sentence in eng]
         ita_tokenized = [self._split(sentence) for sentence in ita]
-                
-        #eng_voc_size = len(eng_tokenized)
-        #ita_voc_size = len(ita_tokenized)
         
         eng_tokenized = [[self.from_eng[word] for word in sentence] for sentence in eng_tokenized]
         ita_tokenized = [[self.from_ita[word] for word in sentence] for sentence in ita_tokenized]
              
         data_set = SplitDataset(eng_sentences = eng_tokenized,
-                                ita_sentences = ita_tokenized#,
-                                #eng_voc_size = eng_voc_size,
-                                #ita_voc_size = ita_voc_size,
+                                ita_sentences = ita_tokenized
                                )
         
         return data_set
     
     def _dataset_split(self, keys):
         
+        # Split the corpus
         eng = []
         ita = []
         corpus_dict_temp = self.corpus_dict.copy()
@@ -153,6 +156,7 @@ class LanguageDataset(Dataset):
     
     def _create_vocabulary(self, eng, ita):
         
+        # Create English and Italian vocabularies 
         eng_tokenized = [self._split(sentence) for sentence in eng]
         ita_tokenized = [self._split(sentence) for sentence in ita]
         
@@ -170,6 +174,7 @@ class LanguageDataset(Dataset):
         
     def translate(self, X, language):
         
+        # Create the translations in English or Italian from the tokens 
         if language == 'ita':
             lang = self.to_ita
         elif language == 'eng':
@@ -197,7 +202,8 @@ class LanguageDataset(Dataset):
         return X_out
                
 class SplitDataset(Dataset):
-
+    
+    # Class to handle the split datasets
     def __init__(
             self, 
             eng_sentences = None,
