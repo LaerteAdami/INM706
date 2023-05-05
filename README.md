@@ -1,5 +1,5 @@
 # INM706
-Neural machine translation from English to Italian, using an encoder-decoder RNN architecture with Bahdanau attention. \
+Neural machine translation from English to Italian, using an encoder-decoder RNN architecture with Bahdanau attention. 
 
 Dataset:
 https://www.manythings.org/anki/
